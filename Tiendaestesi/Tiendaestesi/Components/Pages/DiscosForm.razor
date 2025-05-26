@@ -1,0 +1,134 @@
+﻿@page "/discos/nuevo"
+@page "/discos/editar/{Id:int}"
+@rendermode InteractiveServer
+@inject NavigationManager _navigationManager
+@inject IRepositorioDiscos _repositorioDiscos
+
+<PageTitle>Discos</PageTitle>
+<h3>@_titulo Disco</h3>
+
+<EditForm Model="_disco" FormName="frmDisco" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <!-- Título -->
+    <div class="mb-3 row">
+        <label for="txtTitulo" class="col-sm-2 col-form-label">Título</label>
+        <div class="col-sm-10">
+            <InputText id="txtTitulo" class="form-control" @bind-Value="_disco.Titulo" />
+            <ValidationMessage For="@(() => _disco.Titulo)" />
+        </div>
+    </div>
+
+    <!-- Artista -->
+    <div class="mb-3 row">
+        <label for="txtArtista" class="col-sm-2 col-form-label">Artista</label>
+        <div class="col-sm-10">
+            <InputText id="txtArtista" class="form-control" @bind-Value="_disco.Artista" />
+            <ValidationMessage For="@(() => _disco.Artista)" />
+        </div>
+    </div>
+
+    <!-- Género -->
+    <div class="mb-3 row">
+        <label for="txtGenero" class="col-sm-2 col-form-label">Género</label>
+        <div class="col-sm-10">
+            <InputText id="txtGenero" class="form-control" @bind-Value="_disco.Genero" />
+            <ValidationMessage For="@(() => _disco.Genero)" />
+        </div>
+    </div>
+
+    <!-- Año Lanzamiento -->
+    <div class="mb-3">
+        <label class="form-label">Año Lanzamiento</label>
+        <InputNumber @bind-Value="_disco.An_Lanzamiento" class="form-control"
+                     min="1900" max="@DateTime.Now.Year" />
+        <ValidationMessage For="@(() => _disco.An_Lanzamiento)" />
+    </div>
+
+    <!-- Precio -->
+    <div class="mb-3 row">
+        <label for="numPrecio" class="col-sm-2 col-form-label">Precio</label>
+        <div class="col-sm-10">
+            <InputNumber id="numPrecio" class="form-control" @bind-Value="_disco.Precio" step="0.01" />
+            <ValidationMessage For="@(() => _disco.Precio)" />
+        </div>
+    </div>
+
+    <!-- Stock -->
+    <div class="mb-3 row">
+        <label for="numStock" class="col-sm-2 col-form-label">Stock</label>
+        <div class="col-sm-10">
+            <InputNumber id="numStock" class="form-control" @bind-Value="_disco.Stock" />
+            <ValidationMessage For="@(() => _disco.Stock)" />
+        </div>
+    </div>
+
+    <!-- Condición -->
+    <div class="mb-3 row">
+        <label for="ddlCondicion" class="col-sm-2 col-form-label">Condición</label>
+        <div class="col-sm-10">
+            <InputSelect id="ddlCondicion" class="form-control" @bind-Value="_disco.Condicion">
+                <option value="">Seleccione...</option>
+                <option value="Nuevo">Nuevo</option>
+                <option value="Usado">Usado</option>
+                <option value="Colección">Colección</option>
+            </InputSelect>
+            <ValidationMessage For="@(() => _disco.Condicion)" />
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="row">
+        <div class="col-sm-10 offset-sm-2">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" class="btn btn-danger" @onclick="Cancelar">Cancelar</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private Disco _disco = new();
+    private string _titulo = "Nuevo ";
+
+    private string _anioTemp = DateTime.Now.Year.ToString();
+
+    private void ValidarAnio(string value)
+    {
+        if (int.TryParse(value, out int anio) &&
+            anio >= 1900 &&
+            anio <= DateTime.Now.Year)
+        {
+            _disco.An_Lanzamiento = anio;
+        }
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            _disco = await _repositorioDiscos.Get(Id) ?? new Disco();
+            _titulo = "Editar ";
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (Id > 0)
+        {
+            await _repositorioDiscos.Update(Id, _disco);
+        }
+        else
+        {
+            await _repositorioDiscos.Add(_disco);
+        }
+        Cancelar();
+    }
+
+    private void Cancelar()
+    {
+        _navigationManager.NavigateTo("/discos");
+    }
+}

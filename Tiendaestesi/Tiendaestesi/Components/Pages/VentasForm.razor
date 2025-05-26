@@ -1,0 +1,193 @@
+﻿@page "/ventas/nuevo"
+@page "/ventas/editar/{Id:int}"
+@rendermode InteractiveServer
+@inject NavigationManager _navigationManager
+@inject IRepositorioVentas _repositorioVentas
+@inject IRepositorioClientes _repositorioClientes
+@inject IRepositorioDiscos _repositorioDiscos
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Ventas</PageTitle>
+<h3>@_titulo Venta</h3>
+
+<EditForm Model="_venta" FormName="frmVenta" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <!-- Cliente -->
+    <div class="mb-3 row">
+        <label for="ddlCliente" class="col-sm-2 col-form-label">Cliente</label>
+        <div class="col-sm-10">
+            <InputSelect id="ddlCliente" class="form-control" @bind-Value="_venta.ClienteId">
+                <option value="">Seleccione un cliente...</option>
+                @foreach (var cliente in _clientes)
+                {
+                    <option value="@cliente.Id">@cliente.Nombre</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => _venta.ClienteId)" />
+        </div>
+    </div>
+
+    <!-- Disco -->
+    <div class="mb-3 row">
+        <label for="ddlDisco" class="col-sm-2 col-form-label">Disco</label>
+        <div class="col-sm-10">
+            <InputSelect id="ddlDisco" class="form-control" @bind-Value="_venta.DiscoId">
+                <option value="">Seleccione un disco...</option>
+                @foreach (var disco in _discos.Where(d => d.Stock > 0))
+                {
+                    <option value="@disco.Id">@disco.Titulo - @disco.Artista (Stock: @disco.Stock)</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => _venta.DiscoId)" />
+        </div>
+    </div>
+
+    @if (_venta.DiscoId > 0)
+    {
+        var discoSeleccionado = _discos.FirstOrDefault(d => d.Id == _venta.DiscoId);
+        <div class="mb-3 row">
+            <label class="col-sm-2 col-form-label">Stock disponible</label>
+            <div class="col-sm-10">
+                <input class="form-control" readonly
+                       value="@discoSeleccionado?.Stock" />
+            </div>
+        </div>
+    }
+
+    <!-- Fecha de Venta -->
+    <div class="mb-3 row">
+        <label for="dtFechaVenta" class="col-sm-2 col-form-label">Fecha de Venta</label>
+        <div class="col-sm-10">
+            <InputDate id="dtFechaVenta" class="form-control"
+                       @bind-Value="_venta.FechaVenta"
+                       max="@DateTime.Now.ToString("yyyy-MM-dd")" />
+            <ValidationMessage For="@(() => _venta.FechaVenta)" />
+        </div>
+    </div>
+
+    <!-- Precio Unitario -->
+    <div class="mb-3 row">
+        <label class="col-sm-2 col-form-label">Precio unitario</label>
+        <div class="col-sm-10">
+            <input class="form-control" readonly
+                   value="@(_venta.DiscoId > 0 ? _discos.FirstOrDefault(d => d.Id == _venta.DiscoId)?.Precio.ToString("C") : "Seleccione un disco")" />
+        </div>
+    </div>
+
+    <!-- Cantidad -->
+    <div class="mb-3 row">
+        <label for="numCantidad" class="col-sm-2 col-form-label">Cantidad</label>
+        <div class="col-sm-10">
+            <InputNumber id="numCantidad" class="form-control"
+                         @bind-Value="_venta.Cantidad"
+                         min="1" max="@(_venta.DiscoId > 0 ? _discos.FirstOrDefault(d => d.Id == _venta.DiscoId)?.Stock : 100)" />
+            <ValidationMessage For="@(() => _venta.Cantidad)" />
+        </div>
+    </div>
+
+    <!-- Total -->
+    <div class="mb-3 row">
+        <label class="col-sm-2 col-form-label">Total</label>
+        <div class="col-sm-10">
+            <input class="form-control" readonly value="@Total.ToString("C")" />
+        </div>
+    </div>
+
+    <!-- Método de Pago -->
+    <div class="mb-3 row">
+        <label for="ddlMetodoPago" class="col-sm-2 col-form-label">Método de Pago</label>
+        <div class="col-sm-10">
+            <InputSelect id="ddlMetodoPago" class="form-control" @bind-Value="_venta.MetodoPago">
+                <option value="">Seleccione un método...</option>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+                <option value="Transferencia">Transferencia</option>
+            </InputSelect>
+            <ValidationMessage For="@(() => _venta.MetodoPago)" />
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="row">
+        <div class="col-sm-10 offset-sm-2">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" class="btn btn-danger" @onclick="Cancelar">Cancelar</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private Venta _venta = new();
+    private string _titulo = "Nuevo";
+    private List<Cliente> _clientes = new();
+    private List<Disco> _discos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _clientes = (await _repositorioClientes.GetAll()).OrderBy(c => c.Nombre).ToList();
+        _discos = (await _repositorioDiscos.GetAll()).Where(d => d.Stock > 0).OrderBy(d => d.Titulo).ToList();
+
+        if (Id > 0)
+        {
+            _venta = await _repositorioVentas.Get(Id) ?? new Venta();
+            _titulo = "Editar";
+        }
+        else
+        {
+            _venta.FechaVenta = DateTime.Now.Date;
+            _venta.Cantidad = 1;
+        }
+    }
+
+    private decimal Precio => _discos.FirstOrDefault(d => d.Id == _venta.DiscoId)?.Precio ?? 0;
+    private decimal Total => Math.Round(Precio * _venta.Cantidad, 2);
+
+    private async Task Guardar()
+    {
+        try
+        {
+            var discoVendido = _discos.FirstOrDefault(d => d.Id == _venta.DiscoId);
+            if (discoVendido == null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Por favor seleccione un disco válido");
+                return;
+            }
+
+            if (discoVendido.Stock < _venta.Cantidad)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"No hay suficiente stock. Stock disponible: {discoVendido.Stock}");
+                return;
+            }
+
+            _venta.Total = Total;
+
+            if (Id > 0)
+            {
+                await _repositorioVentas.Update(Id, _venta);
+            }
+            else
+            {
+                await _repositorioVentas.Add(_venta);
+                // Actualizar el stock
+                discoVendido.Stock -= _venta.Cantidad;
+                await _repositorioDiscos.Update(discoVendido.Id, discoVendido);
+            }
+
+            _navigationManager.NavigateTo("/ventas");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al guardar: {ex.Message}");
+        }
+    }
+
+    private void Cancelar()
+    {
+        _navigationManager.NavigateTo("/ventas");
+    }
+}

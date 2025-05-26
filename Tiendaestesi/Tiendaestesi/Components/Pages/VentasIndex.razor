@@ -1,0 +1,223 @@
+﻿@page "/ventas"
+@rendermode InteractiveServer
+@inject NavigationManager _navigator
+@inject IRepositorioVentas _repositorio
+@inject IRepositorioClientes _repositorioClientes
+
+<h3>Ventas</h3>
+
+<a class="btn btn-success mb-3" href="ventas/nuevo">Agregar nueva venta</a>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <!-- Filtro por tipo de fecha -->
+            <div class="col-md-3">
+                <label class="form-label">Filtrar por:</label>
+                <select class="form-select" @bind="_filtroSeleccionado">
+                    <option value="todas">Todas las ventas</option>
+                    <option value="hoy">Ventas de hoy</option>
+                    <option value="mes">Ventas del mes</option>
+                </select>
+            </div>
+
+            <!-- Filtro por mes (solo visible cuando se selecciona "mes") -->
+            @if (_filtroSeleccionado == "mes")
+            {
+                <div class="col-md-2">
+                    <label class="form-label">Mes:</label>
+                    <select class="form-select" @bind="_mesSeleccionado">
+                        @foreach (var mes in _meses)
+                        {
+                            <option value="@mes.Value">@mes.Key</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Año:</label>
+                    <select class="form-select" @bind="_anioSeleccionado">
+                        @foreach (var anio in _anios)
+                        {
+                            <option value="@anio">@anio</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            <!-- Nuevo filtro por cliente -->
+            <div class="col-md-3">
+                <label class="form-label">Cliente:</label>
+                <InputSelect class="form-select" @bind-Value="_filtroClienteId">
+                    <option value="0">Todos los clientes</option>
+                    @foreach (var cliente in _clientes)
+                    {
+                        <option value="@cliente.Id">@cliente.Nombre</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary me-2" @onclick="AplicarFiltros">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+                <button class="btn btn-secondary" @onclick="LimpiarFiltros">
+                    <i class="fas fa-undo"></i> Limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_ventas == null)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+}
+else if (_ventasFiltradas.Count == 0)
+{
+    <div class="alert alert-warning">
+        No hay ventas registradas con los filtros seleccionados
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Disco</th>
+                    <th>Fecha</th>
+                    <th>Precio Unit.</th>
+                    <th>Cantidad</th>
+                    <th>Total</th>
+                    <th>Método Pago</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var venta in _ventasFiltradas)
+                {
+                    <tr>
+                        <td>@(venta.Cliente?.Nombre ?? "N/A")</td>
+                        <td>@(venta.Disco?.Titulo ?? "N/A")</td>
+                        <td>@venta.FechaVenta.ToString("dd/MM/yyyy")</td>
+                        <td>@(venta.Disco?.Precio.ToString("C") ?? "N/A")</td>
+                        <td>@venta.Cantidad</td>
+                        <td>@venta.Total.ToString("C")</td>
+                        <td>@venta.MetodoPago</td>
+                        <td>
+                            <button class="btn btn-outline-secondary" title="Editar" @onclick="@(()=>Modificar(venta.Id))">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
+                                </svg>
+                            </button>
+                            <button class="btn btn-outline-danger" title="Eliminar" @onclick="@(()=>Eliminar(venta))">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
+                                    <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" />
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Venta>? _ventas;
+    private List<Venta> _ventasFiltradas = new();
+    private List<Cliente> _clientes = new();
+
+    // Filtros
+    private string _filtroSeleccionado = "todas";
+    private int _mesSeleccionado = DateTime.Today.Month;
+    private int _anioSeleccionado = DateTime.Today.Year;
+    private int _filtroClienteId = 0;
+
+    private readonly Dictionary<string, int> _meses = new()
+    {
+        {"Enero", 1}, {"Febrero", 2}, {"Marzo", 3}, {"Abril", 4}, {"Mayo", 5}, {"Junio", 6},
+        {"Julio", 7}, {"Agosto", 8}, {"Septiembre", 9}, {"Octubre", 10}, {"Noviembre", 11}, {"Diciembre", 12}
+    };
+
+    private List<int> _anios = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        _ventas = await _repositorio.GetAll();
+        _clientes = await _repositorioClientes.GetAll();
+
+        // Obtener años disponibles
+        if (_ventas != null && _ventas.Count > 0)
+        {
+            var minYear = _ventas.Min(v => v.FechaVenta.Year);
+            var maxYear = _ventas.Max(v => v.FechaVenta.Year);
+            _anios = Enumerable.Range(minYear, maxYear - minYear + 1).Reverse().ToList();
+        }
+        else
+        {
+            _anios.Add(DateTime.Today.Year);
+        }
+
+        AplicarFiltros();
+    }
+
+    private void AplicarFiltros()
+    {
+        if (_ventas == null) return;
+
+        IEnumerable<Venta> query = _ventas;
+
+        // Aplicar filtro por fecha
+        switch (_filtroSeleccionado)
+        {
+            case "hoy":
+                query = query.Where(v => v.FechaVenta.Date == DateTime.Today);
+                break;
+            case "mes":
+                query = query.Where(v =>
+                    v.FechaVenta.Month == _mesSeleccionado &&
+                    v.FechaVenta.Year == _anioSeleccionado);
+                break;
+        }
+
+        // Aplicar filtro por cliente
+        if (_filtroClienteId > 0)
+        {
+            query = query.Where(v => v.ClienteId == _filtroClienteId);
+        }
+
+        _ventasFiltradas = query.OrderByDescending(v => v.FechaVenta).ToList();
+    }
+
+    private void LimpiarFiltros()
+    {
+        _filtroSeleccionado = "todas";
+        _mesSeleccionado = DateTime.Today.Month;
+        _anioSeleccionado = DateTime.Today.Year;
+        _filtroClienteId = 0;
+        AplicarFiltros();
+    }
+
+    private async void Eliminar(Venta venta)
+    {
+        await _repositorio.Delete(venta.Id);
+        _ventas!.Remove(venta);
+        AplicarFiltros();
+    }
+    
+
+    private void Modificar(int id)
+    {
+        _navigator.NavigateTo($"/ventas/editar/{id}");
+    }
+}

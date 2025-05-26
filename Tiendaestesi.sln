@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35828.75
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tiendaestesi", "Tiendaestesi\Tiendaestesi\Tiendaestesi.csproj", "{534D0D4D-5951-4A4E-B02B-FA9EA0388501}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tiendaestesi.Client", "Tiendaestesi\Tiendaestesi.Client\Tiendaestesi.Client.csproj", "{876F54F7-C9D1-479D-9917-F9BA4D6CB276}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{534D0D4D-5951-4A4E-B02B-FA9EA0388501}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{534D0D4D-5951-4A4E-B02B-FA9EA0388501}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{534D0D4D-5951-4A4E-B02B-FA9EA0388501}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{534D0D4D-5951-4A4E-B02B-FA9EA0388501}.Release|Any CPU.Build.0 = Release|Any CPU
+		{876F54F7-C9D1-479D-9917-F9BA4D6CB276}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{876F54F7-C9D1-479D-9917-F9BA4D6CB276}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{876F54F7-C9D1-479D-9917-F9BA4D6CB276}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{876F54F7-C9D1-479D-9917-F9BA4D6CB276}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BD0661D0-6A6A-4261-BA6D-73291D13AC2B}
+	EndGlobalSection
+EndGlobal

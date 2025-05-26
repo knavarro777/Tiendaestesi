@@ -1,0 +1,169 @@
+﻿@page "/discos"
+@rendermode InteractiveServer
+@inject NavigationManager _navigator
+@inject IRepositorioDiscos _repositorio
+
+<h3>Discos</h3>
+
+<a class="btn btn-success mb-3" href="discos/nuevo">Agregar nuevo disco</a>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Título</label>
+                <InputText class="form-control" @bind-Value="_filtroTitulo"
+                           placeholder="Filtrar por título..." />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Género</label>
+                <InputText class="form-control" @bind-Value="_filtroGenero"
+                           placeholder="Filtrar por género..." />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Artista</label>
+                <InputText class="form-control" @bind-Value="_filtroArtista"
+                           placeholder="Filtrar por artista..." />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Condición</label>
+                <InputSelect class="form-control" @bind-Value="_filtroCondicion">
+                    <option value="">Todas</option>
+                    <option value="Nuevo">Nuevo</option>
+                    <option value="Usado">Usado</option>
+                    <option value="Colección">Colección</option>
+                </InputSelect>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-primary me-2" @onclick="AplicarFiltros">
+                    <i class="fas fa-search"></i> Filtrar
+                </button>
+                <button class="btn btn-secondary" @onclick="LimpiarFiltros">
+                    <i class="fas fa-undo"></i> Limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_discos == null)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+}
+else if (!_discos.Any())
+{
+    <div class="alert alert-warning">
+        No hay discos registrados
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Artista</th>
+                    <th>Género</th>
+                    <th>Año</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Condición</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var disco in _discosFiltrados ?? _discos)
+                {
+                    <tr>
+                        <td>@disco.Titulo</td>
+                        <td>@disco.Artista</td>
+                        <td>@disco.Genero</td>
+                        <td>@disco.An_Lanzamiento</td>
+                        <td>@disco.Precio.ToString("C")</td>
+                        <td class="@(disco.Stock <= 5 ? "text-danger fw-bold" : "")">
+                            @disco.Stock @(disco.Stock <= 5 ? "(Bajo stock)" : "")
+                        </td>
+                        <td>@disco.Condicion</td>
+                        <td>
+                            <button class="btn btn-outline-secondary" title="Editar" @onclick="@(()=>Modificar(disco.Id))">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
+                                </svg>
+                            </button>
+                            <button class="btn btn-outline-danger" title="Eliminar" @onclick="@(()=>Eliminar(disco))">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
+                                    <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" />
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Disco>? _discos;
+    private List<Disco>? _discosFiltrados;
+    private string _filtroTitulo = string.Empty;
+    private string _filtroGenero = string.Empty;
+    private string _filtroArtista = string.Empty;
+    private string _filtroCondicion = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDiscos();
+    }
+
+    private async Task CargarDiscos()
+    {
+        _discos = (await _repositorio.GetAll()).OrderBy(d => d.Titulo).ToList();
+        _discosFiltrados = null;
+    }
+
+    private async void Eliminar(Disco disco)
+    {
+        
+       
+            await _repositorio.Delete(disco.Id);
+            _discos!.Remove(disco);
+
+            if (_discosFiltrados != null)
+            {
+                _discosFiltrados = _discosFiltrados.Where(d => d.Id != disco.Id).ToList();
+            }
+
+            StateHasChanged();
+        
+    }
+
+    private void Modificar(int id)
+    {
+        _navigator.NavigateTo($"/discos/editar/{id}");
+    }
+
+    private void AplicarFiltros()
+    {
+        if (_discos == null) return;
+
+        _discosFiltrados = _discos.Where(d =>
+            (string.IsNullOrEmpty(_filtroTitulo) || d.Titulo.Contains(_filtroTitulo, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(_filtroGenero) || d.Genero.Contains(_filtroGenero, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(_filtroArtista) || d.Artista.Contains(_filtroArtista, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(_filtroCondicion) || d.Condicion == _filtroCondicion)
+        ).ToList();
+    }
+
+    private void LimpiarFiltros()
+    {
+        _filtroTitulo = string.Empty;
+        _filtroGenero = string.Empty;
+        _filtroArtista = string.Empty;
+        _filtroCondicion = string.Empty;
+        _discosFiltrados = null;
+    }
+}

@@ -1,0 +1,81 @@
+﻿@page "/clientes/nuevo"
+@page "/clientes/editar/{Id:int}"
+@rendermode InteractiveServer
+@inject NavigationManager _navigationManager
+@inject IRepositorioClientes _repositorioClientes
+
+<PageTitle>Clientes</PageTitle>
+<h3>@_titulo Cliente</h3>
+
+<EditForm Model="_cliente" FormName="frmCliente" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <!-- Nombre -->
+    <div class="mb-3 row">
+        <label for="txtNombre" class="col-sm-2 col-form-label">Nombre</label>
+        <div class="col-sm-10">
+            <InputText id="txtNombre" class="form-control" @bind-Value="_cliente.Nombre" />
+            <ValidationMessage For="@(() => _cliente.Nombre)" />
+        </div>
+    </div>
+
+    <!-- Correo -->
+    <div class="mb-3 row">
+        <label for="txtCorreo" class="col-sm-2 col-form-label">Correo</label>
+        <div class="col-sm-10">
+            <InputText id="txtCorreo" class="form-control" @bind-Value="_cliente.Correo" />
+            <ValidationMessage For="@(() => _cliente.Correo)" />
+        </div>
+    </div>
+
+    <!-- Teléfono -->
+    <div class="mb-3 row">
+        <label for="txtTelefono" class="col-sm-2 col-form-label">Teléfono</label>
+        <div class="col-sm-10">
+            <InputText id="txtTelefono" class="form-control" @bind-Value="_cliente.Telefono" />
+            <ValidationMessage For="@(() => _cliente.Telefono)" />
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="row">
+        <div class="col-sm-10 offset-sm-2">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" class="btn btn-danger" @onclick="Cancelar">Cancelar</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private Cliente _cliente = new();
+    private string _titulo = "Nuevo ";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            _cliente = await _repositorioClientes.Get(Id) ?? new Cliente();
+            _titulo = "Editar ";
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (Id > 0)
+        {
+            await _repositorioClientes.Update(Id, _cliente);
+        }
+        else
+        {
+            await _repositorioClientes.Add(_cliente);
+        }
+        Cancelar();
+    }
+
+    private void Cancelar()
+    {
+        _navigationManager.NavigateTo("/clientes");
+    }
+}
